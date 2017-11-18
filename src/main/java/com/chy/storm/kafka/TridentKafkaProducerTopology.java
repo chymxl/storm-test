@@ -9,8 +9,9 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.storm.Config;
 import org.apache.storm.LocalCluster;
+import org.apache.storm.StormSubmitter;
 import org.apache.storm.kafka.trident.TridentKafkaStateFactory;
-import org.apache.storm.kafka.trident.TridentKafkaStateUpdater;
+import org.apache.storm.kafka.trident.TridentKafkaUpdater;
 import org.apache.storm.kafka.trident.mapper.FieldNameBasedTupleToKafkaMapper;
 import org.apache.storm.kafka.trident.selector.DefaultTopicSelector;
 import org.apache.storm.spout.SpoutOutputCollector;
@@ -126,8 +127,8 @@ public class TridentKafkaProducerTopology {
 		Stream stream = topology.newStream("spout1", spout2);
 		
 		Properties props = new Properties();
-//        props.put("bootstrap.servers", "172.20.4.224:9092,172.20.4.223:9092,172.20.4.221:9092,172.20.4.220:9092,172.20.4.219:9092");
-        props.put("bootstrap.servers", "localhost:9092");
+        props.put("bootstrap.servers", "172.20.4.224:9092,172.20.4.223:9092,172.20.4.221:9092,172.20.4.220:9092,172.20.4.219:9092");
+//        props.put("bootstrap.servers", "localhost:9092");
         props.put("acks", "1");
         props.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
         props.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer");
@@ -138,21 +139,21 @@ public class TridentKafkaProducerTopology {
         		.withTridentTupleToKafkaMapper(new FieldNameBasedTupleToKafkaMapper<String, String>("key","words"));
         
         stream
-        .partitionPersist(factory, new Fields("key", "words"), new TridentKafkaStateUpdater(), new Fields());
+        .partitionPersist(factory, new Fields("key", "words"), new TridentKafkaUpdater(), new Fields());
 //        KafkaBolt<String,String> bolt = new KafkaBolt<String,String>()
 //        		.withProducerProperties(props)
 //        		.withTopicSelector("storm-kafka-test")
 //        		.withTupleToKafkaMapper(new FieldNameBasedTupleToKafkaMapper<String,String>("key", "word"));
         
         try {
-        	LocalCluster cluster = new LocalCluster();
-        	Config conf = new Config();
-        	conf.setDebug(true);
-    		cluster.submitTopology("words-producer", conf, topology.build());
-    		Thread.sleep(600 * 1000);
-    		cluster.killTopology("words-producer");
-    		cluster.shutdown();
-//			StormSubmitter.submitTopology("words-producer", new Config(), topology.build());
+        	StormSubmitter.submitTopology("words-producer", new Config(), topology.build());
+//        	LocalCluster cluster = new LocalCluster();
+//        	Config conf = new Config();
+//        	conf.setDebug(true);
+//    		cluster.submitTopology("words-producer", conf, topology.build());
+//    		Thread.sleep(600 * 1000);
+//    		cluster.killTopology("words-producer");
+//    		cluster.shutdown();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

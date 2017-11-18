@@ -8,6 +8,10 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.storm.Config;
 import org.apache.storm.LocalCluster;
+import org.apache.storm.StormSubmitter;
+import org.apache.storm.generated.AlreadyAliveException;
+import org.apache.storm.generated.AuthorizationException;
+import org.apache.storm.generated.InvalidTopologyException;
 import org.apache.storm.kafka.StringScheme;
 import org.apache.storm.kafka.ZkHosts;
 import org.apache.storm.kafka.trident.TransactionalTridentKafkaSpout;
@@ -99,8 +103,9 @@ public class TridentKafkaConsumerTopology {
 		
 	}
 	
-	public static void main(String[] args) throws InterruptedException {
-		ZkHosts hosts = new ZkHosts("localhost:2181");
+	public static void main(String[] args) throws Exception {
+//		ZkHosts hosts = new ZkHosts("localhost:2181");
+		ZkHosts hosts = new ZkHosts("172.20.4.224:2381,172.20.4.223:2381,172.20.4.221:2381,172.20.4.220:2381,172.20.4.219:2381/chroot/kafka");
 		TridentKafkaConfig config = new TridentKafkaConfig(hosts, "storm-kafka-test");
 		config.scheme = new SchemeAsMultiScheme(new StringScheme());
 		config.startOffsetTime = kafka.api.OffsetRequest.LatestTime();
@@ -115,11 +120,13 @@ public class TridentKafkaConsumerTopology {
 			.project(new Fields("args"))
 			.each(new Fields("args"), new Split(), new Fields("word"))
 			.groupBy(new Fields("word"))
-			.stateQuery(state, new Fields("word"), new MapGet(), new Fields("count"));
+			.stateQuery(state, new Fields("word"), new MapGet(), new Fields("count"))
+			.project(new Fields("word", "count"));
 		
-		LocalCluster cluster = new LocalCluster();
-		cluster.submitTopology("word-count-drpc", new Config(), topology.build());
-		Thread.sleep(600 * 1000);
+//		LocalCluster cluster = new LocalCluster();
+//		cluster.submitTopology("word-count-drpc", new Config(), topology.build());
+//		Thread.sleep(600 * 1000);
+		StormSubmitter.submitTopology("word-count-drpc", new Config(), topology.build());
 	}
 
 }
